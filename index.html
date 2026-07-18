@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>網頁版刮刮樂</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+    .scratch-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    /* 底層的獎品圖片 */
+    .scratch-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      /* 防止拖曳圖片干擾刮刮樂 */
+      user-select: none;
+      -webkit-user-drag: none; 
+    }
+    /* 覆蓋在上面的 Canvas 塗層 */
+    #scratch-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scratch-container">
+    <!-- 這裡放你要讓使用者刮開後看到的圖片 -->
+    <img src="https://picsum.photos/300/300?random=1" alt="獎品">
+    <canvas id="scratch-canvas" width="300" height="300"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    // 1. 初始化：塗滿銀灰色塗層
+    ctx.fillStyle = '#c0c0c0';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. 設定合成模式為「刮除（變透明）」
+    ctx.globalCompositeOperation = 'destination-out';
+
+    // 取得正確的滑鼠/觸控座標
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    // 刮除的繪圖邏輯
+    function scratch(e) {
+      if (!isDrawing) return;
+      e.preventDefault(); // 防止手機端滑動螢幕
+      
+      const pos = getPointerPos(e);
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2); // 20 是刮痕的半徑
+      ctx.fill();
+    }
+
+    // 綁定滑鼠與觸控事件
+    canvas.addEventListener('mousedown', () => isDrawing = true);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
+    canvas.addEventListener('touchmove', scratch);
+    canvas.addEventListener('touchend', () => isDrawing = false);
+  </script>
+
+</body>
+</html>
